@@ -1,6 +1,10 @@
 import { useState } from "react";
 import api from "../utils/api";
 import axios from "axios";
+import {
+    getValidationMessages,
+    type LaravelValidationError,
+} from "../utils/interfaces";
 
 interface NewBookProps {
     setIsNewBook: (arg0: boolean) => void;
@@ -11,17 +15,33 @@ export default function NewBook({ setIsNewBook }: NewBookProps) {
     const [title, setTitle] = useState("");
     const [author, setAuthor] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [violations, setViolations] = useState<string[]>();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
+        setViolations([]);
         setIsSubmitting(true);
         try {
             await api.post("/books/", { author, title });
             setIsNewBook(false);
         } catch (error) {
-            if (axios.isAxiosError(error) && error.response) {
-                setError(error.response.data.description);
+            if (
+                axios.isAxiosError<LaravelValidationError>(error) &&
+                error.response &&
+                error.status === 422
+            ) {
+                const errorData: LaravelValidationError = error.response.data;
+                const violations = getValidationMessages(errorData);
+                const msg = error.response.data.message;
+
+                if (violations) {
+                    setViolations(violations);
+                } else {
+                    setError(msg);
+                }
+            } else {
+                setError("Something went wrong...");
             }
         } finally {
             setIsSubmitting(false);
@@ -41,6 +61,12 @@ export default function NewBook({ setIsNewBook }: NewBookProps) {
                             {error}
                         </p>
                     )}
+
+                    {violations?.map((v) => (
+                        <p key={v} className="text-sm font-medium text-red-600">
+                            {v}
+                        </p>
+                    ))}
 
                     <input
                         type="text"

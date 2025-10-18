@@ -4,13 +4,18 @@ import api from "../utils/api";
 import { useNavigate } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import axios from "axios";
-import type { LoginRequestResponse } from "../utils/interfaces";
+import {
+    getValidationMessages,
+    type LaravelValidationError,
+    type LoginRequestResponse,
+} from "../utils/interfaces";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [isLogging, setIsLogging] = useState(false);
     const [error, setError] = useState("");
+    const [violations, setViolations] = useState<string[]>();
 
     const navigate = useNavigate();
 
@@ -18,6 +23,7 @@ export default function LoginPage() {
         e.preventDefault();
         setIsLogging(true);
         setError("");
+        setViolations([]);
         try {
             const response = await api.post<LoginRequestResponse>(
                 "/auth/login",
@@ -32,8 +38,26 @@ export default function LoginPage() {
 
             navigate("/");
         } catch (error) {
-            if (axios.isAxiosError(error) && error.status === 401) {
-                setError("Invalid credentials");
+            if (
+                axios.isAxiosError<LaravelValidationError>(error) &&
+                error.response
+            ) {
+                if (error.status === 422) {
+                    const errorData: LaravelValidationError =
+                        error.response.data;
+                    const violations = getValidationMessages(errorData);
+                    const msg = error.response.data.message;
+
+                    if (violations) {
+                        setViolations(violations);
+                    } else {
+                        setError(msg);
+                    }
+                } else if (error.status === 401) {
+                    setError("Invalid credentials");
+                } else {
+                    setError("Something went wrong...");
+                }
             } else {
                 setError("Something went wrong...");
             }
@@ -56,6 +80,15 @@ export default function LoginPage() {
                                 {error}
                             </p>
                         )}
+
+                        {violations?.map((v) => (
+                            <p
+                                key={v}
+                                className="text-sm font-medium text-red-600"
+                            >
+                                {v}
+                            </p>
+                        ))}
 
                         <input
                             type="email"
