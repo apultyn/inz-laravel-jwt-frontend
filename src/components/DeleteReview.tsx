@@ -20,7 +20,7 @@ export default function DeleteReview({
     const handleDelete = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
-        if (email !== review.userEmail) {
+        if (email !== review.user_email) {
             setError("Email mismatch");
             return;
         }

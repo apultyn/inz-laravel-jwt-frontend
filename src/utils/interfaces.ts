@@ -13,10 +13,21 @@ export interface Book {
     reviews: Review[];
 }
 
-export interface SpringError {
-    detail: string;
-    description: string | null;
-    violations: string[] | null;
+export interface LaravelValidationError {
+    message: string;
+    errors: {
+        [key: string]: string[];
+    };
+}
+
+export function getValidationMessages(errorResponse: any): string[] {
+    if (!errorResponse?.errors) {
+        return [];
+    }
+    const validationErrors = errorResponse.errors;
+    return Object.values<string[]>(validationErrors).flatMap(
+        (messages) => messages
+    );
 }
 
 export interface User {
@@ -38,4 +49,9 @@ export interface DecodedToken {
 export interface LoginRequestResponse {
     access_token: string;
     expires_in: number;
+}
+
+export interface RegisterRequestResponse {
+    message: string;
+    user: User;
 }

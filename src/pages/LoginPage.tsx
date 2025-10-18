@@ -32,12 +32,8 @@ export default function LoginPage() {
 
             navigate("/");
         } catch (error) {
-            if (
-                axios.isAxiosError(error) &&
-                error.response &&
-                error.response.data
-            ) {
-                setError(error.response.data.description);
+            if (axios.isAxiosError(error) && error.status === 401) {
+                setError("Invalid credentials");
             } else {
                 setError("Something went wrong...");
             }

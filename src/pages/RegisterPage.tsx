@@ -3,7 +3,11 @@ import api from "../utils/api";
 import { useNavigate } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import axios from "axios";
-import type { SpringError } from "../utils/interfaces";
+import {
+    getValidationMessages,
+    type RegisterRequestResponse,
+    type LaravelValidationError,
+} from "../utils/interfaces";
 
 export default function RegisterPage() {
     const [email, setEmail] = useState("");
@@ -12,7 +16,7 @@ export default function RegisterPage() {
     const [isRegistering, setIsRegistering] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
-    const [violations, setViolations] = useState<SpringError["violations"]>();
+    const [violations, setViolations] = useState<string[]>();
 
     const navigate = useNavigate();
 
@@ -20,25 +24,37 @@ export default function RegisterPage() {
         e.preventDefault();
         setError("");
         setSuccess("");
-        setViolations(null);
+        setViolations([]);
         setIsRegistering(true);
         try {
-            const response = await api.post("/auth/register", {
-                email,
-                password,
-                password_confirmation: confirmPassword,
-            });
-            setSuccess(response.data.msg);
+            const response = await api.post<RegisterRequestResponse>(
+                "/auth/register",
+                {
+                    email,
+                    password,
+                    password_confirmation: confirmPassword,
+                }
+            );
+            setSuccess(
+                `User ${response.data.user.email} registered successfully! You can log in now`
+            );
             setEmail("");
             setPassword("");
             setConfirmPassword("");
         } catch (error) {
-            if (axios.isAxiosError<SpringError>(error) && error.response) {
-                if (error.response.data.description) {
-                    setError(error.response.data.description);
-                }
-                if (error.response.data.violations) {
-                    setViolations(error.response.data.violations);
+            if (
+                axios.isAxiosError<LaravelValidationError>(error) &&
+                error.response &&
+                error.status === 422
+            ) {
+                const errorData: LaravelValidationError = error.response.data;
+                const violations = getValidationMessages(errorData);
+                const msg = error.response.data.message;
+
+                if (violations) {
+                    setViolations(violations);
+                } else {
+                    setError(msg);
                 }
             } else {
                 setError("Something went wrong...");

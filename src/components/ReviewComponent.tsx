@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import type { Review, SpringError } from "../utils/interfaces";
+import type { Review, LaravelValidationError } from "../utils/interfaces";
+import { getValidationMessages } from "../utils/interfaces";
 import { getIsAdmin } from "../utils/token";
 import DeleteReview from "./DeleteReview";
 import api from "../utils/api";
@@ -22,7 +23,7 @@ export default function ReviewComponent({
     const [comment, setComment] = useState("");
 
     const [error, setError] = useState("");
-    const [violations, setViolations] = useState<SpringError["violations"]>();
+    const [violations, setViolations] = useState<string[]>();
 
     const isAdmin = getIsAdmin();
 
@@ -55,11 +56,19 @@ export default function ReviewComponent({
             setIsEditing(false);
             fetchBook();
         } catch (error) {
-            if (axios.isAxiosError<SpringError>(error) && error.response) {
-                if (error.response.data.violations) {
-                    setViolations(error.response.data.violations);
-                } else if (error.response.data.detail) {
-                    setError(error.response.data.detail);
+            if (
+                axios.isAxiosError<LaravelValidationError>(error) &&
+                error.response &&
+                error.status === 422
+            ) {
+                const errorData: LaravelValidationError = error.response.data;
+                const violations = getValidationMessages(errorData);
+                const msg = error.response.data.message;
+
+                if (violations) {
+                    setViolations(violations);
+                } else {
+                    setError(msg);
                 }
             } else {
                 setError("Something went wrong...");

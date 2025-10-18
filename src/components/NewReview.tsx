@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import api from "../utils/api";
-import type { SpringError } from "../utils/interfaces";
+import type { LaravelValidationError } from "../utils/interfaces";
+import { getValidationMessages } from "../utils/interfaces";
 import axios from "axios";
 
 interface NewReviewProps {
@@ -13,7 +14,7 @@ export default function NewReview({ bookId, setIsNewReview }: NewReviewProps) {
     const [comment, setComment] = useState("");
     const [error, setError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [violations, setViolations] = useState<SpringError["violations"]>();
+    const [violations, setViolations] = useState<string[]>();
 
     const backdropRef = useRef<HTMLDivElement>(null);
 
@@ -32,7 +33,7 @@ export default function NewReview({ bookId, setIsNewReview }: NewReviewProps) {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
-        setViolations(null);
+        setViolations([]);
         if (!stars) {
             setError("Please select a rating.");
             return;
@@ -50,11 +51,19 @@ export default function NewReview({ bookId, setIsNewReview }: NewReviewProps) {
             });
             setIsNewReview(false);
         } catch (error) {
-            if (axios.isAxiosError<SpringError>(error) && error.response) {
-                if (error.response.data.violations) {
-                    setViolations(error.response.data.violations);
-                } else if (error.response.data.detail) {
-                    setError(error.response.data.detail);
+            if (
+                axios.isAxiosError<LaravelValidationError>(error) &&
+                error.response &&
+                error.status === 422
+            ) {
+                const errorData: LaravelValidationError = error.response.data;
+                const violations = getValidationMessages(errorData);
+                const msg = error.response.data.message;
+
+                if (violations) {
+                    setViolations(violations);
+                } else {
+                    setError(msg);
                 }
             } else {
                 setError("Something went wrong...");
