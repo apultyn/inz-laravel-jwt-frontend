@@ -4,6 +4,7 @@ import api from "../utils/api";
 import { useNavigate } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import axios from "axios";
+import type { LoginRequestResponse } from "../utils/interfaces";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -18,12 +19,15 @@ export default function LoginPage() {
         setIsLogging(true);
         setError("");
         try {
-            const response = await api.post("/auth/login", { email, password });
+            const response = await api.post<LoginRequestResponse>(
+                "/auth/login",
+                { email, password }
+            );
 
-            Cookies.set("token", response.data.token, {
+            Cookies.set("token", response.data.access_token, {
                 secure: true,
                 sameSite: "Strict",
-                expires: response.data.expiresIn,
+                expires: response.data.expires_in,
             });
 
             navigate("/");

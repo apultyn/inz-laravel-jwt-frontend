@@ -76,7 +76,7 @@ export default function ReviewComponent({
                     <>
                         <header className="mb-2 flex items-center justify-between">
                             <h4 className="break-all font-semibold text-gray-800">
-                                {review.userEmail}
+                                {review.user_email}
                             </h4>
                             <p className="text-sm text-yellow-500">
                                 {"★".repeat(review.stars)}

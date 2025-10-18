@@ -26,7 +26,7 @@ export default function RegisterPage() {
             const response = await api.post("/auth/register", {
                 email,
                 password,
-                confirmPassword,
+                password_confirmation: confirmPassword,
             });
             setSuccess(response.data.msg);
             setEmail("");
