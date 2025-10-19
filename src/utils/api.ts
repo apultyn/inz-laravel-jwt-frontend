@@ -41,7 +41,6 @@ api.interceptors.response.use(
             error.response.status === 401 &&
             !isLoginRequest
         ) {
-            alert(error.response.data.description);
             Cookies.set("token", "");
             window.location.href = "/login";
         } else if (
@@ -49,7 +48,6 @@ api.interceptors.response.use(
             error.response.status === 403 &&
             error.response.data.description !== "Data integrity violated"
         ) {
-            alert(error.response.data.description);
             window.location.href = "/";
         } else {
             console.error("Response error: ", error);
