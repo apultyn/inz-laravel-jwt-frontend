@@ -43,7 +43,7 @@ export interface DecodedToken {
     email: string;
     exp: number;
     iat: number;
-    role: string;
+    roles: string[];
 }
 
 export interface LoginRequestResponse {
