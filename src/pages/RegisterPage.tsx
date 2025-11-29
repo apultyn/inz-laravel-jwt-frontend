@@ -28,7 +28,7 @@ export default function RegisterPage() {
         setIsRegistering(true);
         try {
             const response = await api.post<RegisterRequestResponse>(
-                "/auth/register",
+                "/auth/register/",
                 {
                     email,
                     password,

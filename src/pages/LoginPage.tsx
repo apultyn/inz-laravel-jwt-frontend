@@ -26,7 +26,7 @@ export default function LoginPage() {
         setViolations([]);
         try {
             const response = await api.post<LoginRequestResponse>(
-                "/auth/login",
+                "/auth/login/",
                 { email, password }
             );
 
